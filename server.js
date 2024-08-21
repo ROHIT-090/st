@@ -1,3 +1,5 @@
+
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -5,7 +7,6 @@ const app = express();
 
 // Environment variables (use .env file for local development)
 // Ensure you set this environment variable in your hosting environment
-
 
 mongoose.connect('mongodb+srv://sabareesh:sabari123@cluster0.0zhev.mongodb.net/?retryWrites=true&w=majority');
 
@@ -47,9 +48,9 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.get('/profile', async (req, res) => {
+app.post('/profile', async (req, res) => {  // Changed from GET to POST
   try {
-    const user = await User.findOne({ email: req.query.email });
+    const user = await User.findOne({ email: req.body.email });  // req.query.email changed to req.body.email
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -60,7 +61,7 @@ app.get('/profile', async (req, res) => {
   }
 });
 
-app.get('/admin-dashboard', async (req, res) => {
+app.post('/admin-dashboard', async (req, res) => {  // Changed from GET to POST
   try {
     // Fetch user data from MongoDB
     const users = await User.find({});
@@ -95,4 +96,3 @@ app.get('/admin-dashboard', async (req, res) => {
 app.listen(5000, () => {
   console.log('Server running on http://localhost:5000');
 });
-
