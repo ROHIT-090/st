@@ -3,10 +3,19 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
 
-mongoose.connect('mongodb+srv://sabareesh:sabari123@cluster0.0zhev.mongodb.net/?retryWrites=true&w=majority'
- );
+// Environment variables (use .env file for local development)
+// Ensure you set this environment variable in your hosting environment
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://sabareesh:sabari123@cluster0.0zhev.mongodb.net/?retryWrites=true&w=majority';
 
-app.use(cors());
+mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('Failed to connect to MongoDB', err));
+
+app.use(cors({
+  origin: 'https://startoon-frontend.onrender.com', // Update with your frontend domain
+  methods: ['GET', 'POST'],
+  credentials: true,
+}));
 app.use(express.json());
 
 const User = mongoose.model('User', new mongoose.Schema({
@@ -19,19 +28,29 @@ const User = mongoose.model('User', new mongoose.Schema({
 }));
 
 app.post('/signup', async (req, res) => {
-  const user = new User({ ...req.body, lastLoginDate: new Date(), isAdmin: false });
-  await user.save();
-  res.sendStatus(200);
+  try {
+    const user = new User({ ...req.body, lastLoginDate: new Date(), isAdmin: false });
+    await user.save();
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Error signing up user:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
 });
 
 app.post('/login', async (req, res) => {
-  const user = await User.findOne({ email: req.body.email });
-  if (!user || user.password !== req.body.password) {
-    return res.sendStatus(401);
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user || user.password !== req.body.password) {
+      return res.sendStatus(401);
+    }
+    user.lastLoginDate = new Date();
+    await user.save();
+    res.json({ isAdmin: user.isAdmin });
+  } catch (error) {
+    console.error('Error logging in user:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
-  user.lastLoginDate = new Date();
-  await user.save();
-  res.json({ isAdmin: user.isAdmin });
 });
 
 app.get('/profile', async (req, res) => {
@@ -41,10 +60,9 @@ app.get('/profile', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     res.json(user);
-    console.log("User fetched:", user);
   } catch (error) {
-    console.error("Error fetching profile:", error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 
@@ -57,7 +75,7 @@ app.get('/admin-dashboard', async (req, res) => {
     const aggregateData = await User.aggregate([
       {
         $group: {
-          _id: { $month: "$createdAt" }, // Assumes users have a 'createdAt' field
+          _id: { $month: "$lastLoginDate" }, // Assuming 'lastLoginDate' field for aggregation
           count: { $sum: 1 }
         }
       },
@@ -75,10 +93,12 @@ app.get('/admin-dashboard', async (req, res) => {
 
     res.json({ users, chartLabels, chartData });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to load dashboard data', error });
+    console.error('Error fetching admin dashboard data:', error);
+    res.status(500).json({ message: 'Failed to load dashboard data', error: error.message });
   }
 });
 
 app.listen(5000, () => {
   console.log('Server running on http://localhost:5000');
 });
+
