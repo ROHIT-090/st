@@ -5,11 +5,9 @@ const app = express();
 
 // Environment variables (use .env file for local development)
 // Ensure you set this environment variable in your hosting environment
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://sabareesh:sabari123@cluster0.0zhev.mongodb.net/?retryWrites=true&w=majority';
 
-mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Failed to connect to MongoDB', err));
+
+mongoose.connect('mongodb+srv://sabareesh:sabari123@cluster0.0zhev.mongodb.net/?retryWrites=true&w=majority');
 
 app.use(cors({
   origin: 'https://startoon-frontend.onrender.com', // Update with your frontend domain
