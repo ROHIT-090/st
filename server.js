@@ -9,11 +9,7 @@ const app = express();
 
 mongoose.connect('mongodb+srv://sabareesh:sabari123@cluster0.0zhev.mongodb.net/?retryWrites=true&w=majority');
 
-app.use(cors({
-  origin: 'https://startoon-frontend.onrender.com', // Update with your frontend domain
-  methods: ['GET', 'POST'],
-  credentials: true,
-}));
+app.use(cors());
 app.use(express.json());
 
 const User = mongoose.model('User', new mongoose.Schema({
